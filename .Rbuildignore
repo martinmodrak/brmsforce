@@ -1,0 +1,7 @@
+^renv$
+^renv\.lock$
+^brmsforce\.Rproj$
+^\.Rproj\.user$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

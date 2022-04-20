@@ -1,0 +1,15 @@
+Package: brmsforce
+Title: Additional Families and Support Functions for brms
+Version: 0.0.0.9000
+Authors@R: 
+    person("Martin", "Modrák", , "martin.modrak@biomed.cas.cz", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-8886-7797"))
+Description: Minor code snippets to get more out of your brms installation.
+    Currnently very much WIP.
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Imports: 
+    brms (>= 2.16.0)

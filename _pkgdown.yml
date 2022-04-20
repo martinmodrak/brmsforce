@@ -1,0 +1,49 @@
+url: https://martinmodrak.github.io/brmsforce/
+
+template:
+  params:
+    bootswatch: cosmo
+
+navbar:
+  title: "brmsforce"
+  left:
+    - text: "Vignettes"
+      href: articles/index.html
+    - text: "Functions"
+      href: reference/index.html
+    - text: "Other Packages"
+      menu:
+        - text: "brms"
+          href: http://paul-buerkner.github.io/brms/
+        - text: "rstan"
+          href: http://mc-stan.org/rstan
+        - text: "cmdstanr"
+          href: https://mc-stan.org/cmdstanr
+        - text: "rstanarm"
+          href: http://mc-stan.org/rstanarm
+        - text: "bayesplot"
+          href: http://mc-stan.org/bayesplot
+        - text: "shinystan"
+          href: http://mc-stan.org/shinystan
+        - text: "loo"
+          href: http://mc-stan.org/loo
+        - text: "projpred"
+          href: http://mc-stan.org/projpred
+        - text: "rstantools"
+          href: http://mc-stan.org/rstantools
+        - text: "posterior"
+          href: https://mc-stan.org/posterior
+    - text: "Stan"
+      href: http://mc-stan.org
+  right:
+   - icon: fa-twitter
+     href: https://twitter.com/modrak_m
+   - icon: fa-github
+     href: https://github.com/martinmodrak/brmsforce
+   - icon: fa-users
+     href: http://discourse.mc-stan.org/
+
+home:
+  links:
+  - text: Ask a question
+    href: http://discourse.mc-stan.org/
