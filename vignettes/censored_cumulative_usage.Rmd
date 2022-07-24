@@ -1,0 +1,126 @@
+---
+title: "Using the `censored_cumulative` family"
+author: "Martin Modrák"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    toc: yes
+vignette: >
+  %\VignetteIndexEntry{Using the `censored_cumulative` family}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+
+The censored cumulative family extends the `cumulative(link = "logit")` family
+to allow for observations that are only partially known. I.e. instead of observing
+an integer, we observe a _range_ of integers that we cannot distinguish. 
+Since ordinal response is bounded by definition, this lets us directly model also left and right censoring.
+
+Mathematically, if we have $K$ categories, then given a set of thresholds $\tau_0 = -\infty < \tau_1 < ... < \tau_{K - 1} < \tau_K = \infty$
+and observed bounds $l \leq u$
+we have:
+
+$$
+\mathrm{Pr}(l \leq Y \leq u) = F(\tau_u - \mu) - F(\tau_{l - 1} - \mu)
+$$
+where $F$ is the CDF of the logistic distribution and $\mu$ is the linear predictor.
+
+As a preprocessing step to using this family you need to make sure that all categories are actually distinguishable. 
+I.e. if two categories are only ever observed in ranges that contain them both, they need to be merged before using the model.
+
+
+```{r setup, message=FALSE,warning=FALSE, results="hide"}
+library(brms)
+library(brmsforce)
+options(brms.backend = "cmdstanr", mc.cores = parallel::detectCores())
+
+fit_cache_dir <- "fit_cache"
+if(!dir.exists(fit_cache_dir)) {
+  dir.create(fit_cache_dir)
+}
+```
+
+
+Here's how we can simulate a simple dataset with 4 categories, matching the model (ignoring priors),
+first without any censoring:
+
+
+```{r}
+set.seed(268523)
+N <- 200
+thresholds <- sort(rnorm(3))#c(-1, -0.3, 1.2)
+main_effect <- 0.5
+X <- rnorm(N)
+
+#mu <- X * main_effect
+mu <- 0
+mu_noise <- mu + rlogis(N)
+Y_no_cens <- dplyr::case_when(
+  mu_noise < thresholds[1] ~ 1,
+  mu_noise < thresholds[2] ~ 2,
+  mu_noise < thresholds[3] ~ 3,
+  TRUE ~ 4
+)
+
+if(length(unique(Y_no_cens)) != 4) {
+  stop("Some categories not observed")
+}
+
+
+```
+
+Now we can add some simple left and right censoring where for some
+observations, values
+
+```{r}
+set.seed(965423)
+bounds_raw <- matrix(sample(1:4, size = 2*N, replace = TRUE), ncol = 2, nrow = N)
+low_bounds <- pmin(bounds_raw[,1], bounds_raw[,2])
+high_bounds <- pmax(bounds_raw[,1], bounds_raw[,2])
+#low_bounds <- sample(1:3, size = N, replace = TRUE)
+
+Y_min <- Y_no_cens
+Y_max <- Y_no_cens
+
+left_cens <- Y_no_cens <= low_bounds
+right_cens <- Y_no_cens >= high_bounds
+Y_min[left_cens] <- 1
+Y_max[left_cens] <- low_bounds[left_cens]
+
+Y_min[right_cens] <- high_bounds[right_cens]
+Y_max[right_cens] <- 4
+
+df <- data.frame(Y_no_cens, Y_min, Y_max, X)
+```
+
+```{r}
+hist(Y_max - Y_min, breaks = 0:4 - 0.5)
+```
+
+
+Now, let's fit the model:
+
+```{r}
+thres_prior <- prior(normal(0, 1), class = "Intercept")
+fit <- brm(brmsformula(Y_min | vint(Y_max)  ~ 1, center = FALSE) , data = df, 
+           family = censored_cumulative_logit(), stanvars = censored_cumulative_logit_stanvars(), 
+           prior = thres_prior,
+           file = file.path(fit_cache_dir, "censored_cumulative"), file_refit = "on_change",
+           refresh = 500)
+
+summary(fit)
+```
+
+From our simulation, the `Intercept[x]` correspond to the `thresholds` variable (`r paste0(thresholds, collapse = ", ")`) and `X` to the `main_effect` (`r main_effect`) so this lines up reasonably well.
+
+```{r}
+fit_no_cens <- brm(brmsformula(Y_no_cens ~ 1, center = FALSE) , data = df, 
+           family = cumulative("logit"), 
+           refresh = 500,
+           prior = thres_prior,
+           file = file.path(fit_cache_dir, "censored_cumulative_nocens"), file_refit = "on_change")
+summary(fit_no_cens)
+
+```
+
